@@ -1,0 +1,176 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scout Groups Map (Public)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    <style>
+        #map { height: 100vh; width: 100%; }
+        .group-list {
+            display: none;
+            position: fixed;
+            top: 90px;
+            left: 10px;
+            max-height: 65vh;
+            overflow-y: auto;
+            width: 300px;
+            background: rgba(219,226,233, 0.4);
+            padding: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            direction: rtl;
+            text-align: left;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        .group-list-item {
+            word-break: break-word;
+            cursor: pointer;
+            margin: 5px 0;
+            direction: ltr;
+            text-align: left;
+        }
+        .info-box {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(255,255,255,0.9);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-width: min(520px, calc(100vw - 20px));
+        }
+        #toggle-button {
+            position: fixed;
+            top: 45px;
+            left: 60px;
+            z-index: 1101;
+            padding: 10px 15px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        @media (max-width: 600px) {
+            .group-list {
+                width: calc(100vw - 20px);
+            }
+            .info-box {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+<button id="toggle-button">Toggle Group List</button>
+<div id="map"></div>
+<div class="group-list" id="group-list">
+    <b>Scout Groups List</b><br>
+</div>
+<div class="info-box">Massive thanks to the 105 amazing Scouts groups that are supporting this initiative</div>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script>
+    var scoutGroupsData = {"type": "FeatureCollection", "features": [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.49306, 57.6682]}, "properties": {"district_name": "Macduff", "count": 1, "group_details": [{"Scout Group Name": "1st Macduff cub scout group"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.7562, 57.4656]}, "properties": {"district_name": "Aberchirder, Cabrach, Cairnie, Forgue, Gartly, Glass, Kennethmont, Lumsden, Rhynie, Rothiemay", "count": 1, "group_details": [{"Scout Group Name": "1st Marnoch"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.05051, 52.3237]}, "properties": {"district_name": "Bromsgrove", "count": 1, "group_details": [{"Scout Group Name": "Lickey and Blackwell"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.89699, 52.2778]}, "properties": {"district_name": "Studley", "count": 1, "group_details": [{"Scout Group Name": "Studley - Griffin Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.74208, 52.3832]}, "properties": {"district_name": "Knowle, Dorridge", "count": 1, "group_details": [{"Scout Group Name": "4th Knowle Sea Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.79138, 52.3528]}, "properties": {"district_name": "Olton, Solihull", "count": 1, "group_details": [{"Scout Group Name": "1st Tanworth in Arden Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.46582, 53.7552]}, "properties": {"district_name": "Blackburn, Bank Hey, Belthorn, Blackamoor, Clayton-le-Dale, Guide, Knuzden, Mellor, Ramsgreave, Rishton, Salesbury, Shadsworth, Sunnybower, Whitebirk, Wilpshire", "count": 1, "group_details": [{"Scout Group Name": "Equalinks"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.71437, 53.7266]}, "properties": {"district_name": "Cleckheaton, Gomersal, Scholes", "count": 1, "group_details": [{"Scout Group Name": "3rd Spen Valley"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.4406, 53.5889]}, "properties": {"district_name": "Bolton, Smithills, Halliwell, Heaton", "count": 2, "group_details": [{"Scout Group Name": "16th Bolton"}, {"Scout Group Name": "16th Bolton Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.28889, 53.5922]}, "properties": {"district_name": "Bury, Heap, Heap Bridge, Nangreaves, Summerseat, Unsworth, Walmersley", "count": 1, "group_details": [{"Scout Group Name": "44th Bury (R.O.B.O.T.)"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [0.00313196, 50.8784]}, "properties": {"district_name": "Lewes, Cooksbridge, East Chiltington, Iford, Kingston, Offham, Plumpton, Plumpton Green, Rodmell, Southease, Swanborough, Telscombe", "count": 1, "group_details": [{"Scout Group Name": "6th Lewes"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.0318655, 51.4033]}, "properties": {"district_name": "Beckenham, Eden Park, Elmers End, Park Langley, Shortlands", "count": 1, "group_details": [{"Scout Group Name": "1st Beckenham South"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.92826, 51.3606]}, "properties": {"district_name": "Kewstoke, Weston-super-Mare, Worle", "count": 1, "group_details": [{"Scout Group Name": "1st North Worle"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-5.70762, 54.5716]}, "properties": {"district_name": "Newtownards, Ballygowan, Comber, Conlig, Killinchy, Moneyrea", "count": 1, "group_details": [{"Scout Group Name": "2nd Ards Scout Group"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-6.88096, 54.5145]}, "properties": {"district_name": "Dungannon, Ballygawley, Cappagh, Castlecaulfield, Donaghmore, Galbally, Garvaghy, Pomeroy, Rock, Seskilgreen", "count": 1, "group_details": [{"Scout Group Name": "1st Ballygawley"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [0.257165, 52.0287]}, "properties": {"district_name": "Ashdon, Church End, Great Chesterford, Great Sampford, Hempstead, Hinxton, Howlett End, Ickleton, Little Chesterford, Little Sampford, Little Walden, Radwinter, Red Oaks Hill, Saffron Walden, Sewards End, Wimbish, Wimbish Green", "count": 1, "group_details": [{"Scout Group Name": "1st Thaxted-Carver Scout Group"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-3.20205, 51.5204]}, "properties": {"district_name": "Whitchurch, Thornhill, Lisvane, Rhiwbina, Pantmawr, Gabalfa, Heath, Llandaff North", "count": 1, "group_details": [{"Scout Group Name": "Llanishen and Lisvane Scout Group"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-3.26057, 51.4104]}, "properties": {"district_name": "Barry, Cadoxton, Barry Docks", "count": 1, "group_details": [{"Scout Group Name": "11th Barry Sea Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.98218, 53.3358]}, "properties": {"district_name": "Bromborough, Eastham, New Ferry, Port Sunlight, Spital", "count": 1, "group_details": [{"Scout Group Name": "13th Bebington (St Barnabas) Scout Group"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.48181, 52.3934]}, "properties": {"district_name": "Binley, Whitley, Willenhall, Cheylesmore, Styvechale, Finham, Fenside, Stoke Aldermoor, Green Lane, Ernesford Grange, Binley Woods", "count": 1, "group_details": [{"Scout Group Name": "70th Coventry Cubs"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-3.02796, 56.4712]}, "properties": {"district_name": "Lochee, Blackness, Ninewells, Menziehill, Charleston, Balgay, Ardler, Logie", "count": 1, "group_details": [{"Scout Group Name": "46th Angus"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.49997, 52.8994]}, "properties": {"district_name": "Heatherton Village, Littleover, Normanton, Pear Tree", "count": 1, "group_details": [{"Scout Group Name": "125th Littleover Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.5621, 54.7828]}, "properties": {"district_name": "Durham", "count": 1, "group_details": [{"Scout Group Name": "19th Durham Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.78283, 54.2945]}, "properties": {"district_name": "Wensleydale, Bedale", "count": 1, "group_details": [{"Scout Group Name": "North Hambleton District Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.071103, 53.5632]}, "properties": {"district_name": "Grimsby", "count": 1, "group_details": [{"Scout Group Name": "3rd Cleethorpes"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.17116, 53.5368]}, "properties": {"district_name": "Arksey, Barnburgh, Bentley, Cusworth, Harlington, Scawsby, Scawthorpe, Sprotborough, Toll Bar", "count": 1, "group_details": [{"Scout Group Name": "9th Doncaster Scout Troop"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.17958, 50.8614]}, "properties": {"district_name": "Blandford Forum", "count": 1, "group_details": [{"Scout Group Name": "Blandford Scout Group & The Winterborne Scout Group"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.22914, 52.3866]}, "properties": {"district_name": "Kidderminster", "count": 1, "group_details": [{"Scout Group Name": "WF11 Harkaway Explorers"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.0201401, 51.5864]}, "properties": {"district_name": "Walthamstow, Upper Walthamstow", "count": 1, "group_details": [{"Scout Group Name": "30th Walthamstow"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-3.50822, 50.7272]}, "properties": {"district_name": "Exeter city centre", "count": 1, "group_details": [{"Scout Group Name": "2nd Exeter Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-3.46049, 50.6956]}, "properties": {"district_name": "Exeter", "count": 1, "group_details": [{"Scout Group Name": "1st Topsham Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-3.85115, 56.1499]}, "properties": {"district_name": "Menstrie", "count": 1, "group_details": [{"Scout Group Name": "Menstrie Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-3.91439, 56.0217]}, "properties": {"district_name": "Denny, Fankerton, Stoneywood", "count": 1, "group_details": [{"Scout Group Name": "51st Dennyloanhead Scout Group"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-4.20912, 55.8561]}, "properties": {"district_name": "Dennistoun, Haghill, Parkhead", "count": 1, "group_details": [{"Scout Group Name": "105th Glasgow Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.21888, 51.8428]}, "properties": {"district_name": "Gloucester", "count": 1, "group_details": [{"Scout Group Name": "Unmentionables ESU"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.22122, 51.7393]}, "properties": {"district_name": "Stroud", "count": 1, "group_details": [{"Scout Group Name": "Randwick Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.761416, 51.2909]}, "properties": {"district_name": "Farnborough, Cove", "count": 1, "group_details": [{"Scout Group Name": "8th Farnborough Air Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.57701, 51.3199]}, "properties": {"district_name": "Woking, Knaphill, St. John's, Horsell, Goldsworth Park", "count": 1, "group_details": [{"Scout Group Name": "Sheerwater Scout Group"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-3.02419, 53.4891]}, "properties": {"district_name": "Blundellsands, Brighton-le-Sands, Crosby, Little Crosby, Thornton", "count": 1, "group_details": [{"Scout Group Name": "30th Crosby"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.706799, 52.6593]}, "properties": {"district_name": "Empingham, Manton, Thistleton, Uppingham, Whissendine, Langham", "count": 1, "group_details": [{"Scout Group Name": "2nd Cottesmore"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.09669, 52.6361]}, "properties": {"district_name": "Hamilton, Thurnby Lodge, Evington", "count": 1, "group_details": [{"Scout Group Name": "115th Leicester"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.64466, 53.8409]}, "properties": {"district_name": "Horsforth", "count": 1, "group_details": [{"Scout Group Name": "7th Airedale"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.68282, 53.9101]}, "properties": {"district_name": "Arthington, Otley, Pool", "count": 2, "group_details": [{"Scout Group Name": "2nd Otley Scouts"}, {"Scout Group Name": "Otley Bridge Church Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.44268, 53.7571]}, "properties": {"district_name": "Great Preston, Methley, Mickletown, Oulton, Rothwell, Swillington, Woodlesford", "count": 1, "group_details": [{"Scout Group Name": "Rothwell Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.465199, 51.8985]}, "properties": {"district_name": "Luton (West), Chalton, Leagrave", "count": 1, "group_details": [{"Scout Group Name": "Leagrave Scout Group"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.661494, 51.9109]}, "properties": {"district_name": "Leighton Buzzard, Bragenham, Briggington, Burcott, Cheddington, Chelmscote, Clipstone, Crafton, Cublington, Eggington, Great Billington, Grove, Heath and Reach, Hockliffe, Horton, Hollingdon, Ivinghoe, Ivinghoe Aston, Ledburn, Leedon, Little Billington, Mentmore, Pitstone, Slapton, Soulbury, Stanbridge, Stewkley, Stockgrove, Tebworth, Tilsworth, Wing, Wingfield", "count": 1, "group_details": [{"Scout Group Name": "Heath and Reach"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.27341, 53.4389]}, "properties": {"district_name": "Chorlton-cum-Hardy, Firswood", "count": 1, "group_details": [{"Scout Group Name": "Chorlton Scout Group"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.28654, 53.3972]}, "properties": {"district_name": "Baguley, Roundthorn Industrial Estate", "count": 1, "group_details": [{"Scout Group Name": "1st Wythenshawe"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-3.83814, 55.728]}, "properties": {"district_name": "Carluke, Law", "count": 2, "group_details": [{"Scout Group Name": "3rd Carluke Scouts"}, {"Scout Group Name": "6th Lanarkshire (1st Carluke) St Johnâ€™s Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.71969, 54.9835]}, "properties": {"district_name": "Lemington, Throckley, Newburn", "count": 1, "group_details": [{"Scout Group Name": "1st Lemington Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.51874, 55.0011]}, "properties": {"district_name": "Battle Hill, Willington, Wallsend, North Tyne Tunnel", "count": 1, "group_details": [{"Scout Group Name": "18th Wallsend Scouts/Tynemouth Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.57967, 54.9973]}, "properties": {"district_name": "High Heaton, Benton", "count": 2, "group_details": [{"Scout Group Name": "61st Newcastle Scout Group"}, {"Scout Group Name": "Dene Explorers"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.04264, 53.0133]}, "properties": {"district_name": "Calverton, Lowdham", "count": 1, "group_details": [{"Scout Group Name": "1st Trentside Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.13718, 52.9375]}, "properties": {"district_name": "Nottingham City Centre, Sneinton, The Meadows, West Bridgford", "count": 1, "group_details": [{"Scout Group Name": "4th West Bridgford Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.681947, 52.5]}, "properties": {"district_name": "Bulwick, Corby", "count": 1, "group_details": [{"Scout Group Name": "1st Corby"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.710096, 52.4792]}, "properties": {"district_name": "Great Oakley, Little Oakley", "count": 1, "group_details": [{"Scout Group Name": "7th Corby Scout Group"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-3.03961, 51.6934]}, "properties": {"district_name": "Pontypool, Blaenavon, Little Mill, Glascoed", "count": 1, "group_details": [{"Scout Group Name": "1st Goytre"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [1.46482, 52.6348]}, "properties": {"district_name": "Acle, Brundall, Reedham, Rackheath, Salhouse", "count": 1, "group_details": [{"Scout Group Name": "1st Acle Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.20423, 53.7008]}, "properties": {"district_name": "Bacup, Britannia, Stacksteads", "count": 2, "group_details": [{"Scout Group Name": "2nd Rossendale Scout Group"}, {"Scout Group Name": "42nd Rossendale Scout GroupOL"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.0115, 53.5525]}, "properties": {"district_name": "Delph, Denshaw, Diggle, Dobcross, Greenfield, Uppermill", "count": 1, "group_details": [{"Scout Group Name": "20th Oldham Scout Group"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.33897, 52.0635]}, "properties": {"district_name": "Banbury", "count": 1, "group_details": [{"Scout Group Name": "7th Banbury Scout Troop"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.263379, 52.2366]}, "properties": {"district_name": "St Neots, Abbotsley, Buckden, Croxton, Diddington, Duloe, Eaton Ford, Eaton Socon, Eltisley, Eynesbury", "count": 1, "group_details": [{"Scout Group Name": "2nd St Neots"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.190682, 52.3585]}, "properties": {"district_name": "Abbots Ripton, Alconbury, Alconbury Weston, Barham, Bluntisham, Brampton, Broughton, Buckworth, Bythorn, Catworth, Colne, Coppingford, Covington, Earith, Easton, Ellington, Fenstanton, Glatton, Grafham, Great Gidding, Great Stukeley, Hamerton, Hartford, Hemingford Abbots, Hemingford Grey, Hilton, Houghton, Keyston, Kimbolton, Kings Ripton, Leighton Bromswold, Little Gidding, Little Stukeley, Lower Dean, Molesworth, Old Hurst, Old Weston, Perry, Pidley, Sawtry, Somersham, Spaldwick, Stow Longa, Tilbrook, Upper Dean, Warboys, Wennington, Winwick, Wistow, Woodhurst, Woodwalton, Woolley, Wyton", "count": 1, "group_details": [{"Scout Group Name": "1st Brington"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-3.40884, 56.3861]}, "properties": {"district_name": "Perth", "count": 1, "group_details": [{"Scout Group Name": "3rd Perthshire (Scone) Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.7018, 53.7579]}, "properties": {"district_name": "City Centre, Avenham, Broadgate, Deepdale, Fishwick, St. Matthew's, Penwortham", "count": 1, "group_details": [{"Scout Group Name": "Deepdale Central (PMGHS) Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.32123, 51.3985]}, "properties": {"district_name": "Newbury", "count": 1, "group_details": [{"Scout Group Name": "2nd Newbury Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.949716, 51.3073]}, "properties": {"district_name": "Hook, Sherfield-on-Loddon, Stratfield Turgis, Turgis Green", "count": 1, "group_details": [{"Scout Group Name": "4th Bramshill Hartley Wintney"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.04049, 51.4563]}, "properties": {"district_name": "Calcot Row, Tilehurst", "count": 1, "group_details": [{"Scout Group Name": "1st Theale and Calcot"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.328747, 51.0749]}, "properties": {"district_name": "Horsham, Broadbridge Heath, Rusper, Rudgwick, Warnham", "count": 2, "group_details": [{"Scout Group Name": "2nd Horsham"}, {"Scout Group Name": "Titans Explorer Scout Unit"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.135731, 50.9568]}, "properties": {"district_name": "Burgess Hill, Ditchling Common", "count": 1, "group_details": [{"Scout Group Name": "Rowallan"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.0999159, 51.0029]}, "properties": {"district_name": "Haywards Heath, Lindfield", "count": 2, "group_details": [{"Scout Group Name": "10th Haywards Heath Scouts"}, {"Scout Group Name": "1st Lindfield"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.203249, 51.2367]}, "properties": {"district_name": "Reigate", "count": 1, "group_details": [{"Scout Group Name": "Reigate District"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [0.3704, 51.4676]}, "properties": {"district_name": "Tilbury, East Tilbury, West Tilbury", "count": 1, "group_details": [{"Scout Group Name": "East Tilbury Scout Group"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.40923, 53.3499]}, "properties": {"district_name": "Birley, Gleadless, Gleadless Townend, Hackenthorpe, Intake, Ridgeway", "count": 1, "group_details": [{"Scout Group Name": "270th Intake"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [0.054573, 51.4462]}, "properties": {"district_name": "Eltham, Mottingham, New Eltham, Falconwood, Chinbrook, Longlands, Kidbrooke", "count": 1, "group_details": [{"Scout Group Name": "3rd Royal Eltham Storm Troop"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.0909954, 51.8056]}, "properties": {"district_name": "Hertford", "count": 1, "group_details": [{"Scout Group Name": "1st Watton at Stone"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.262473, 52.0116]}, "properties": {"district_name": "Arlesey", "count": 2, "group_details": [{"Scout Group Name": "1st Arlesey"}, {"Scout Group Name": "1st Arlesey Halifax Troop"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.555495, 51.5955]}, "properties": {"district_name": "Chalfont Common, Chalfont St Peter, Gerrards Cross, Horn Hill", "count": 1, "group_details": [{"Scout Group Name": "1st CSP Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.09235, 51.4709]}, "properties": {"district_name": "Chippenham", "count": 1, "group_details": [{"Scout Group Name": "Wiltshire North Explorers"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.08102, 51.5891]}, "properties": {"district_name": "Malmesbury", "count": 1, "group_details": [{"Scout Group Name": "1st Malmesbury (King Athelstan) Scout Group"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.74399, 51.6149]}, "properties": {"district_name": "Cricklade, Ashton Keynes, Highworth, Shrivenham, Watchfield", "count": 1, "group_details": [{"Scout Group Name": "Northview Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [0.589402, 51.522]}, "properties": {"district_name": "Canvey Island", "count": 1, "group_details": [{"Scout Group Name": "Essex Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.10099, 52.7896]}, "properties": {"district_name": "Stafford", "count": 1, "group_details": [{"Scout Group Name": "12th Stafford/Mercury Cubs"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.16866, 53.1155]}, "properties": {"district_name": "Biddulph", "count": 1, "group_details": [{"Scout Group Name": "1st Buglawton"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.129598, 51.4238]}, "properties": {"district_name": "Streatham, Norbury, Thornton Heath, Streatham Park, Furzedown, Streatham Vale, Pollards Hill", "count": 1, "group_details": [{"Scout Group Name": "4th Streatham Sea Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.7944, 52.5352]}, "properties": {"district_name": "Church Stretton, Cardington", "count": 1, "group_details": [{"Scout Group Name": "2nd Longmynd"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-2.47248, 52.8981]}, "properties": {"district_name": "Market Drayton", "count": 1, "group_details": [{"Scout Group Name": "1st Ashley Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [0.163112, 51.2952]}, "properties": {"district_name": "Cudham", "count": 1, "group_details": [{"Scout Group Name": "4th Sevenoaks (St. John's) Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [0.268, 51.299]}, "properties": {"district_name": "Ightham, Wrotham", "count": 1, "group_details": [{"Scout Group Name": "9th Sevenoaks (Seal) Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [0.26794, 51.1267]}, "properties": {"district_name": "Royal Tunbridge Wells, Pembury", "count": 1, "group_details": [{"Scout Group Name": "23rd Hawkenbury, Tunbridge Wells"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-5.07613, 50.4138]}, "properties": {"district_name": "Newquay", "count": 1, "group_details": [{"Scout Group Name": "Artemis ESU"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.420048, 51.4522]}, "properties": {"district_name": "Hatton", "count": 1, "group_details": [{"Scout Group Name": "10th Feltham"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.120626, 51.522]}, "properties": {"district_name": "Great Ormond Street Hospital", "count": 1, "group_details": [{"Scout Group Name": "8th Holborn"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.401176, 51.6697]}, "properties": {"district_name": "North Watford", "count": 1, "group_details": [{"Scout Group Name": "1st North Watford"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-1.93005, 52.095]}, "properties": {"district_name": "Evesham", "count": 1, "group_details": [{"Scout Group Name": "1st Salford Priors"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.41981, 54.0142]}, "properties": {"district_name": "Driffield", "count": 1, "group_details": [{"Scout Group Name": "Nafferton Scouts"}]}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-0.788705, 53.9249]}, "properties": {"district_name": "Pocklington, Barmby Moor, Melbourne, Seaton Ross", "count": 1, "group_details": [{"Scout Group Name": "Pocklington Scout Troop"}]}}]};
+    var allGroupNames = ["105th Glasgow Scouts", "10th Feltham", "10th Haywards Heath Scouts", "115th Leicester", "11th Barry Sea Scouts", "125th Littleover Scouts", "12th Stafford/Mercury Cubs", "13th Bebington (St Barnabas) Scout Group", "16th Bolton", "16th Bolton Scouts", "18th Wallsend Scouts/Tynemouth Scouts", "19th Durham Scouts", "1st Acle Scouts", "1st Arlesey", "1st Arlesey Halifax Troop", "1st Ashley Scouts", "1st Ballygawley", "1st Beckenham South", "1st Brington", "1st Buglawton", "1st Corby", "1st CSP Scouts", "1st Goytre", "1st Lemington Scouts", "1st Lindfield", "1st Macduff cub scout group", "1st Malmesbury (King Athelstan) Scout Group", "1st Marnoch", "1st North Watford", "1st North Worle", "1st Salford Priors", "1st Tanworth in Arden Scouts", "1st Thaxted-Carver Scout Group", "1st Theale and Calcot", "1st Topsham Scouts", "1st Trentside Scouts", "1st Watton at Stone", "1st Wythenshawe", "20th Oldham Scout Group", "23rd Hawkenbury, Tunbridge Wells", "270th Intake", "2nd Ards Scout Group", "2nd Cottesmore", "2nd Exeter Scouts", "2nd Horsham", "2nd Longmynd", "2nd Newbury Scouts", "2nd Otley Scouts", "2nd Rossendale Scout Group", "2nd St Neots", "30th Crosby", "30th Walthamstow", "3rd Carluke Scouts", "3rd Cleethorpes", "3rd Perthshire (Scone) Scouts", "3rd Royal Eltham Storm Troop", "3rd Spen Valley", "42nd Rossendale Scout GroupOL", "44th Bury (R.O.B.O.T.)", "46th Angus", "4th Bramshill Hartley Wintney", "4th Knowle Sea Scouts", "4th Sevenoaks (St. John's) Scouts", "4th Streatham Sea Scouts", "4th West Bridgford Scouts", "51st Dennyloanhead Scout Group", "61st Newcastle Scout Group", "6th Lanarkshire (1st Carluke) St Johnâ€™s Scouts", "6th Lewes", "70th Coventry Cubs", "7th Airedale", "7th Banbury Scout Troop", "7th Corby Scout Group", "8th Farnborough Air Scouts", "8th Holborn", "9th Doncaster Scout Troop", "9th Sevenoaks (Seal) Scouts", "Artemis ESU", "Blandford Scout Group & The Winterborne Scout Group", "Chorlton Scout Group", "Deepdale Central (PMGHS) Scouts", "Dene Explorers", "East Tilbury Scout Group", "Equalinks", "Essex Scouts", "Heath and Reach", "Leagrave Scout Group", "Lickey and Blackwell", "Llanishen and Lisvane Scout Group", "Menstrie Scouts", "Nafferton Scouts", "North Hambleton District Scouts", "Northview Scouts", "Otley Bridge Church Scouts", "Pocklington Scout Troop", "Randwick Scouts", "Reigate District", "Rothwell Scouts", "Rowallan", "Sheerwater Scout Group", "Studley - Griffin Scouts", "Titans Explorer Scout Unit", "Unmentionables ESU", "WF11 Harkaway Explorers", "Wiltshire North Explorers"];
+
+    var map = L.map('map', {
+        center: [54.5, -3],
+        zoom: 6,
+        minZoom: 5,
+        maxZoom: 13,
+        maxBounds: [[49.9, -10.5], [59, 2.1]],
+        maxBoundsViscosity: 1.0
+    });
+
+    var openStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    var cartoDBPositron = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    });
+
+    var cartoDBDarkMatter = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    });
+
+    var baseLayers = {
+        "OpenStreetMap": openStreetMap,
+        "CartoDB Positron": cartoDBPositron,
+        "CartoDB Dark Matter": cartoDBDarkMatter
+    };
+    L.control.layers(baseLayers, null, { collapsed: true }).addTo(map);
+
+    var markers = L.markerClusterGroup();
+    var markerMap = {};
+
+    L.geoJSON(scoutGroupsData, {
+        onEachFeature: function (feature, layer) {
+            var popupContent = "<b>" + feature.properties.district_name + "</b><br><ul>";
+            var sortedGroups = feature.properties.group_details.slice().sort(function(a, b) {
+                return a['Scout Group Name'].localeCompare(b['Scout Group Name']);
+            });
+            sortedGroups.forEach(function(detail) {
+                var groupName = detail['Scout Group Name'];
+                popupContent += "<li>" + groupName + "</li>";
+                markerMap[groupName.toLowerCase()] = layer;
+            });
+            popupContent += "</ul>";
+            layer.bindPopup(popupContent);
+        },
+        pointToLayer: function (feature, latlng) {
+            var marker = L.marker(latlng, {
+                icon: L.divIcon({
+                    html: "<div style='background-color:blue;color:white;border-radius:50%;text-align:center;width:30px;height:30px;line-height:30px;'>" + feature.properties.count + "</div>",
+                    className: 'marker-icon'
+                })
+            });
+            markers.addLayer(marker);
+            return marker;
+        }
+    }).addTo(markers);
+
+    map.addLayer(markers);
+
+    function toggleGroupList() {
+        var list = document.getElementById('group-list');
+        if (list.style.display === 'none' || list.style.display === '') {
+            list.innerHTML = '<b>Scout Groups List</b><br>';
+            allGroupNames.forEach(function(groupName) {
+                var item = document.createElement('div');
+                item.className = 'group-list-item';
+                item.textContent = groupName;
+                item.onclick = function() {
+                    var layer = markerMap[groupName.toLowerCase()];
+                    if (layer) {
+                        map.closePopup();
+                        markers.zoomToShowLayer(layer, function() {
+                            map.setView(layer.getLatLng(), 14);
+                            layer.openPopup();
+                        });
+                    }
+                };
+                list.appendChild(item);
+            });
+            list.style.display = 'block';
+        } else {
+            list.style.display = 'none';
+        }
+    }
+
+    document.getElementById('toggle-button').addEventListener('click', toggleGroupList);
+</script>
+</body>
+</html>
